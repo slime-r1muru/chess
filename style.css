@@ -3,11 +3,11 @@
     --text-color: #ecf0f1;
     --board-light: #f0d9b5; 
     --board-dark: #b58863;  
-    --highlight: rgba(155, 199, 0, 0.7); /* 選取的高光 */
-    --last-move: rgba(255, 255, 51, 0.5); /* 歷史移動的高光 */
+    --highlight: rgba(155, 199, 0, 0.7);
+    --last-move: rgba(255, 255, 51, 0.5);
     --possible-move: #2ecc71; 
     --attack-move: #e74c3c;   
-    --check-danger: rgba(231, 76, 60, 0.8); /* 將軍時的紅光 */
+    --check-danger: rgba(231, 76, 60, 0.8);
 }
 
 body {
@@ -68,7 +68,7 @@ h1 { margin: 20px 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
 /* --- 互動與提示特效 --- */
 .square.selected { background-color: var(--highlight) !important; }
 .square.last-move { background-color: var(--last-move) !important; }
-.square.in-check { box-shadow: inset 0 0 25px var(--check-danger) !important; } /* 被將軍的紅框 */
+.square.in-check { box-shadow: inset 0 0 25px var(--check-danger) !important; }
 
 .square.possible-move::after {
     content: ''; position: absolute; width: 25%; height: 25%;
@@ -86,7 +86,6 @@ h1 { margin: 20px 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
     background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 8px;
 }
 
-/* --- 升變視窗樣式 --- */
 #promotion-modal {
     display: none; position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.95);
