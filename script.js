@@ -1,19 +1,13 @@
-// 實例化 chess.js 引擎
 let game = new Chess();
 let boardEl = document.getElementById('chess-board');
 let selectedSquare = null;
 let aiDifficulty = 'normal';
 let isPlayerTurn = true;
 
-// 使用 Unicode 實體符號定義棋子
 const pieceSymbols = { 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' };
 
-// 棋子基礎價值 (用於 AI 評分)
 const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
 
-/**
- * 初始化 HTML 棋盤格
- */
 function createBoardHTML() {
     boardEl.innerHTML = '';
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -36,9 +30,6 @@ function createBoardHTML() {
     }
 }
 
-/**
- * 讀取引擎狀態，並將棋子渲染到畫面上
- */
 function drawPieces() {
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     for (let rank = 1; rank <= 8; rank++) {
@@ -58,9 +49,6 @@ function drawPieces() {
     }
 }
 
-/**
- * 開始遊戲
- */
 function startGame(difficulty) {
     aiDifficulty = difficulty;
     game.reset(); 
@@ -73,9 +61,6 @@ function startGame(difficulty) {
     document.getElementById('screen-game').style.display = 'flex';
 }
 
-/**
- * 點擊棋盤互動邏輯
- */
 function onSquareClick(square) {
     if (game.game_over() || !isPlayerTurn) return;
 
@@ -143,9 +128,6 @@ function updateStatus() {
     document.getElementById('status-bar').innerText = status;
 }
 
-/**
- * AI 演算法區塊
- */
 function makeAIMove() {
     if (game.game_over()) return;
 
