@@ -4,8 +4,9 @@ let selectedSquare = null;
 let aiDifficulty = 'normal';
 let isPlayerTurn = true;
 
-const pieceSymbols = { 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' };
+let pendingMove = null; 
 
+const pieceSymbols = { 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' };
 const pieceValues = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
 
 function createBoardHTML() {
@@ -14,7 +15,6 @@ function createBoardHTML() {
     for (let rank = 8; rank >= 1; rank--) {
         for (let i = 0; i < 8; i++) {
             let squareSan = files[i] + rank;
-            
             let square = document.createElement('div');
             square.classList.add('square');
             square.classList.add((rank + i) % 2 === 0 ? 'dark' : 'light');
@@ -31,6 +31,8 @@ function createBoardHTML() {
 }
 
 function drawPieces() {
+    document.querySelectorAll('.in-check').forEach(el => el.classList.remove('in-check'));
+
     const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     for (let rank = 1; rank <= 8; rank++) {
         for (let i = 0; i < 8; i++) {
@@ -44,6 +46,10 @@ function drawPieces() {
             if (piece) {
                 pieceDiv.classList.add(piece.color === 'w' ? 'white' : 'black');
                 pieceDiv.innerHTML = pieceSymbols[piece.type];
+
+                if (piece.type === 'k' && piece.color === game.turn() && game.in_check()) {
+                    document.querySelector(`[data-square="${squareSan}"]`).classList.add('in-check');
+                }
             }
         }
     }
@@ -62,14 +68,14 @@ function startGame(difficulty) {
 }
 
 function onSquareClick(square) {
-    if (game.game_over() || !isPlayerTurn) return;
+    if (game.game_over() || !isPlayerTurn || pendingMove) return;
 
     if (selectedSquare && document.querySelector(`[data-square="${square}"].possible-move`)) {
-        makeMove(selectedSquare, square);
+        attemptMove(selectedSquare, square);
         return;
     }
 
-    clearHighlights();
+    clearHighlights(['selected', 'possible-move', 'has-piece']);
     let piece = game.get(square);
 
     if (piece && piece.color === 'w') {
@@ -81,57 +87,99 @@ function onSquareClick(square) {
     }
 }
 
-function clearHighlights() {
+function clearHighlights(classesToRemove) {
     document.querySelectorAll('.square').forEach(el => {
-        el.classList.remove('selected', 'possible-move', 'has-piece');
+        classesToRemove.forEach(cls => el.classList.remove(cls));
     });
 }
 
 function showPossibleMoves(square) {
     let moves = game.moves({ square: square, verbose: true });
-    
     moves.forEach(move => {
         let targetSquareEl = document.querySelector(`[data-square="${move.to}"]`);
         if (targetSquareEl) {
             targetSquareEl.classList.add('possible-move');
-            if (game.get(move.to)) {
-                targetSquareEl.classList.add('has-piece');
-            }
+            if (game.get(move.to)) targetSquareEl.classList.add('has-piece');
         }
     });
 }
 
-function makeMove(from, to) {
-    game.move({ from: from, to: to, promotion: 'q' }); 
-    clearHighlights();
+function attemptMove(from, to) {
+    let piece = game.get(from);
+    let isPromotion = (piece.type === 'p' && (to.includes('8') || to.includes('1')));
+
+    if (isPromotion) {
+        pendingMove = { from: from, to: to };
+        document.getElementById('promotion-modal').style.display = 'block';
+    } else {
+        executeMove({ from: from, to: to });
+    }
+}
+
+function submitPromotion(promotedPiece) {
+    document.getElementById('promotion-modal').style.display = 'none';
+    let moveObj = pendingMove;
+    moveObj.promotion = promotedPiece;
+    pendingMove = null;
+    executeMove(moveObj);
+}
+
+function executeMove(moveObj) {
+    let move = game.move(moveObj);
+    if (!move) return;
+    
+    clearHighlights(['selected', 'possible-move', 'has-piece', 'last-move']);
     selectedSquare = null;
+    
+    document.querySelector(`[data-square="${move.from}"]`).classList.add('last-move');
+    document.querySelector(`[data-square="${move.to}"]`).classList.add('last-move');
+
     drawPieces(); 
     updateStatus();
 
     if (!game.game_over()) {
-        isPlayerTurn = false;
-        document.getElementById('status-bar').innerText = 'AI 思考中...';
-        window.setTimeout(makeAIMove, 400); 
+        if (game.turn() === 'b') {
+            isPlayerTurn = false;
+            document.getElementById('status-bar').innerText = 'AI 思考中...';
+            window.setTimeout(makeAIMove, 300); 
+        } else {
+            isPlayerTurn = true;
+        }
     }
 }
 
 function updateStatus() {
     let status = '';
+    
     if (game.in_checkmate()) {
-        status = (game.turn() === 'w') ? '遊戲結束，您被將死了！' : '遊戲結束，您贏了！';
-    } else if (game.in_draw()) {
-        status = '遊戲結束，雙方平局。';
-    } else {
+        status = (game.turn() === 'w') ? '遊戲結束，您被將死了！' : '遊戲結束，您將死了AI！贏了！';
+    } 
+    else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+        if (game.in_stalemate()) status = '平手 (逼和/欠行：無合法步可走)';
+        else if (game.in_threefold_repetition()) status = '平手 (三次重複局面)';
+        else if (game.insufficient_material()) status = '平手 (雙方兵力不足以將死)';
+        else status = '平手 (50步規則或協議和局)';
+    } 
+    else {
         status = (game.turn() === 'w') ? '您的回合 (白方)' : 'AI 回合 (黑方)';
         if (game.in_check()) status += ' ⚠️被將軍！';
     }
-    document.getElementById('status-bar').innerText = status;
+    
+    let statusBar = document.getElementById('status-bar');
+    statusBar.innerText = status;
+    if (game.game_over() || game.in_check()) {
+        statusBar.style.background = 'rgba(231, 76, 60, 0.8)';
+    } else {
+        statusBar.style.background = 'rgba(0,0,0,0.3)';
+    }
 }
 
 function makeAIMove() {
     if (game.game_over()) return;
 
-    let moves = game.moves();
+    let moves = game.moves({ verbose: true });
+    if (moves.length === 0) return;
+    
     let bestMove = null;
 
     if (aiDifficulty === 'easy') {
@@ -139,28 +187,23 @@ function makeAIMove() {
     } else if (aiDifficulty === 'normal') {
         bestMove = findBestMoveGreedy(moves);
     } else {
-        bestMove = findBestMoveMinimax(2); 
+        bestMove = findBestMoveMinimax(3);
     }
 
-    game.move(bestMove);
-    drawPieces();
-    updateStatus();
-    isPlayerTurn = true; 
+    if (bestMove.promotion) bestMove.promotion = 'q';
+
+    executeMove(bestMove);
 }
 
 function findBestMoveGreedy(moves) {
     let bestMove = null;
     let maxVal = -Infinity;
-    let verboseMoves = game.moves({ verbose: true });
 
-    for (let move of verboseMoves) {
+    for (let move of moves) {
         let score = move.captured ? pieceValues[move.captured] : 0;
         score += Math.random() * 0.1; 
         
-        if (score > maxVal) {
-            maxVal = score;
-            bestMove = move;
-        }
+        if (score > maxVal) { maxVal = score; bestMove = move; }
     }
     return bestMove || moves[Math.floor(Math.random() * moves.length)];
 }
@@ -170,15 +213,15 @@ function findBestMoveMinimax(depth) {
     let bestVal = Infinity; 
     let bestMove = null;
 
+    verboseMoves.sort(() => Math.random() - 0.5);
+
     for (let move of verboseMoves) {
+        if (move.promotion) move.promotion = 'q';
         game.move(move); 
         let value = minimax(depth - 1, -Infinity, Infinity, true); 
         game.undo();     
 
-        if (value < bestVal) {
-            bestVal = value;
-            bestMove = move;
-        }
+        if (value < bestVal) { bestVal = value; bestMove = move; }
     }
     return bestMove || verboseMoves[0];
 }
@@ -191,6 +234,7 @@ function minimax(depth, alpha, beta, isMaximizingPlayer) {
     if (isMaximizingPlayer) {
         let maxEval = -Infinity;
         for (let move of moves) {
+            if (move.promotion) move.promotion = 'q';
             game.move(move);
             let ev = minimax(depth - 1, alpha, beta, false);
             game.undo();
@@ -202,6 +246,7 @@ function minimax(depth, alpha, beta, isMaximizingPlayer) {
     } else {
         let minEval = Infinity;
         for (let move of moves) {
+            if (move.promotion) move.promotion = 'q';
             game.move(move);
             let ev = minimax(depth - 1, alpha, beta, true);
             game.undo();
@@ -214,6 +259,13 @@ function minimax(depth, alpha, beta, isMaximizingPlayer) {
 }
 
 function evaluateBoard() {
+    if (game.in_checkmate()) {
+        return game.turn() === 'w' ? -9999 : 9999;
+    }
+    if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+        return 0; 
+    }
+
     let totalEvaluation = 0;
     const board = game.board();
     for (let rank = 0; rank < 8; rank++) {
