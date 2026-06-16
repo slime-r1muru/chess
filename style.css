@@ -1,0 +1,102 @@
+:root {
+    --bg-color: #2c3e50;
+    --text-color: #ecf0f1;
+    --board-light: #f0d9b5; 
+    --board-dark: #b58863;  
+    --highlight: rgba(155, 199, 0, 0.7); /* 選取的高光 */
+    --last-move: rgba(255, 255, 51, 0.5); /* 歷史移動的高光 */
+    --possible-move: #2ecc71; 
+    --attack-move: #e74c3c;   
+    --check-danger: rgba(231, 76, 60, 0.8); /* 將軍時的紅光 */
+}
+
+body {
+    font-family: 'Segoe UI', "Microsoft JhengHei", sans-serif;
+    background-color: var(--bg-color); color: var(--text-color);
+    margin: 0; display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; user-select: none;
+}
+
+h1 { margin: 20px 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+#screen-menu, #screen-game {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; max-width: 800px;
+}
+#screen-game { display: none; }
+
+.menu-container {
+    background: rgba(255,255,255,0.1); padding: 30px; 
+    border-radius: 15px; text-align: center; margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 25px; margin: 8px; font-size: 16px; font-weight: bold;
+    cursor: pointer; border: none; border-radius: 8px; color: white;
+    transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+.btn:active { transform: translateY(1px); }
+
+.btn-easy { background-color: #2ecc71; }
+.btn-normal { background-color: #f39c12; }
+.btn-hard { background-color: #e74c3c; }
+.btn-danger { background-color: #c0392b; margin-top: 20px;}
+
+#board-wrapper {
+    position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    border: 8px solid #4a3121; border-radius: 5px; background-color: var(--board-dark);
+}
+
+.board {
+    display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+    width: 90vw; height: 90vw; max-width: 500px; max-height: 500px;
+}
+
+.square {
+    width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;
+    position: relative; cursor: pointer;
+}
+
+.square.light { background-color: var(--board-light); }
+.square.dark { background-color: var(--board-dark); }
+
+.piece { font-size: 45px; line-height: 1; cursor: pointer; z-index: 10; }
+.piece.white { color: #ffffff; text-shadow: 0px 2px 4px rgba(0,0,0,0.6), 0px 0px 2px #000; }
+.piece.black { color: #111111; text-shadow: 0px 2px 4px rgba(255,255,255,0.4), 0px 0px 2px #fff; }
+
+/* --- 互動與提示特效 --- */
+.square.selected { background-color: var(--highlight) !important; }
+.square.last-move { background-color: var(--last-move) !important; }
+.square.in-check { box-shadow: inset 0 0 25px var(--check-danger) !important; } /* 被將軍的紅框 */
+
+.square.possible-move::after {
+    content: ''; position: absolute; width: 25%; height: 25%;
+    background-color: var(--possible-move); border-radius: 50%; z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.square.possible-move.has-piece::after {
+    width: 80%; height: 80%; background-color: transparent;
+    border: 5px solid var(--attack-move); box-sizing: border-box;
+}
+
+#status-bar {
+    margin: 15px 0; font-size: 20px; font-weight: bold;
+    background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 8px;
+}
+
+/* --- 升變視窗樣式 --- */
+#promotion-modal {
+    display: none; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.95);
+    padding: 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    text-align: center; z-index: 100; border: 3px solid #333;
+}
+#promotion-modal h3 { margin-top: 0; color: #333; }
+.promotion-pieces { display: flex; gap: 15px; justify-content: center; }
+.promotion-pieces .piece {
+    font-size: 50px; background: #bbb; border-radius: 8px; padding: 10px;
+    transition: transform 0.2s, background 0.2s;
+}
+.promotion-pieces .piece:hover { transform: scale(1.1); background: #9b59b6; }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIDE 專業西洋棋對弈系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>西洋棋對弈系統 (FIDE 規則)</h1>
+
+    <div id="screen-menu">
+        <div class="menu-container">
+            <h2>請選擇遊戲難度</h2>
+            <p>本局您將執白棋 (先手)</p>
+            <button class="btn btn-easy" onclick="startGame('easy')">簡單</button><br>
+            <button class="btn btn-normal" onclick="startGame('normal')">一般</button><br>
+            <button class="btn btn-hard" onclick="startGame('hard')">困難</button>
+        </div>
+    </div>
+
+    <div id="screen-game">
+        <div id="status-bar">白方回合</div>
+        
+        <div id="board-wrapper">
+            <div class="board" id="chess-board">
+                </div>
+            
+            <div id="promotion-modal">
+                <h3>選擇升變棋子</h3>
+                <div class="promotion-pieces">
+                    <div class="piece white" onclick="submitPromotion('q')">♛</div>
+                    <div class="piece white" onclick="submitPromotion('r')">♜</div>
+                    <div class="piece white" onclick="submitPromotion('b')">♝</div>
+                    <div class="piece white" onclick="submitPromotion('n')">♞</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-danger" onclick="location.reload()">放棄並返回主選單</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
